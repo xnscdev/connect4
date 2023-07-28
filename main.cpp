@@ -17,6 +17,7 @@
  */
 
 #include "Solver.hpp"
+#include <fstream>
 #include <iostream>
 
 using namespace GameSolver::Connect4;
@@ -49,7 +50,24 @@ int main(int argc, char** argv) {
       }
     }
   }
-  solver.loadBook(opening_book);
+  std::ifstream ifs(opening_book, std::ios::binary);
+  if (!ifs.good())
+    {
+      std::cerr << "Error opening opening book file" << std::endl;
+      return 1;
+    }
+  ifs.seekg(0, std::ios::end);
+  size_t len = ifs.tellg();
+  ifs.seekg(0, std::ios::beg);
+  unsigned char *buf = (unsigned char *)malloc(len);
+  ifs.read ((char*)buf, len);
+  bool b = solver.loadBook(buf);
+  free (buf);
+  if (!b)
+    {
+      std::cerr << "Failed to load opening book" << std::endl;
+      return 1;
+    }
 
   std::string line;
 

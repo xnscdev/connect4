@@ -85,66 +85,49 @@ class OpeningBook {
     * - size key elements
     * - size value elements
     */
-  void load(std::string filename) {
+  bool load(const unsigned char *data) {
     depth = -1;
     delete T;
-    std::ifstream ifs(filename, std::ios::binary); // open file
-
-    if(ifs.fail()) {
-      std::cerr << "Unable to load opening book: " << filename << std::endl;
-      return;
-    } else std::cerr << "Loading opening book from file: " << filename << ". ";
 
     char _width, _height, _depth, value_bytes, partial_key_bytes, log_size;
 
-    ifs.read(&_width, 1);
-    if(ifs.fail() || _width != width) {
-      std::cerr << "Unable to load opening book: invalid width (found: " << int(_width) << ", expected: " << width << ")" << std::endl;
-      return;
+    _width = data[0];
+    if(_width != width) {
+      return false;
     }
 
-    ifs.read(&_height, 1);
-    if(ifs.fail() || _height != height) {
-      std::cerr << "Unable to load opening book: invalid height(found: " << int(_height) << ", expected: " << height << ")"  << std::endl;
-      return;
+    _height = data[1];
+    if(_height != height) {
+      return false;
     }
 
-    ifs.read(&_depth, 1);
-    if(ifs.fail() || _depth > width * height) {
-      std::cerr << "Unable to load opening book: invalid depth (found: " << int(_depth) << ")"  << std::endl;
-      return;
+    _depth = data[2];
+    if(_depth > width * height) {
+      return false;
     }
 
-    ifs.read(&partial_key_bytes, 1);
-    if(ifs.fail() || partial_key_bytes > 8) {
-      std::cerr << "Unable to load opening book: invalid internal key size(found: " << int(partial_key_bytes) << ")"  << std::endl;
-      return;
+    partial_key_bytes = data[3];
+    if(partial_key_bytes > 8) {
+      return false;
     }
 
-    ifs.read(&value_bytes, 1);
-    if(ifs.fail() || value_bytes != 1) {
-      std::cerr << "Unable to load opening book: invalid value size (found: " << int(value_bytes) << ", expected: 1)"  << std::endl;
-      return;
+    value_bytes = data[4];
+    if(value_bytes != 1) {
+      return false;
     }
 
-    ifs.read(&log_size, 1);
-    if(ifs.fail() || log_size > 40) {
-      std::cerr << "Unable to load opening book: invalid log2(size)(found: " << int(log_size) << ")"  << std::endl;
-      return;
+    log_size = data[5];
+    if(log_size > 40) {
+      return false;
     }
 
     if((T = initTranspositionTable(partial_key_bytes, log_size))) {
-      ifs.read(reinterpret_cast<char *>(T->getKeys()), T->getSize() * partial_key_bytes);
-      ifs.read(reinterpret_cast<char *>(T->getValues()), T->getSize() * value_bytes);
-      if(ifs.fail()) {
-        std::cerr << "Unable to load data from opening book" << std::endl;
-        return;
-      }
+      memcpy (reinterpret_cast<char *>(T->getKeys()), &data[6], T->getSize() * partial_key_bytes);
+      memcpy (reinterpret_cast<char *>(T->getValues()), &data[6 + T->getSize() * partial_key_bytes], T->getSize() * value_bytes);
       depth = _depth; // set it in case of success only, keep -1 in case of failure
-      std::cerr << "done" << std::endl;
+      return true;
     }
-    else std::cerr << "Unable to initialize opening book" << std::endl;
-    ifs.close();
+    return false;
   }
 
   void save(const std::string output_file) const {

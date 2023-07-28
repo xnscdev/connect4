@@ -26,9 +26,9 @@ extern "C"
 {
 
 void
-LoadSolver (void)
+LoadSolver (const unsigned char *data)
 {
-  solver.loadBook ("Connect4OpeningBook.bin");
+  solver.loadBook (data);
 }
 
 int
@@ -38,6 +38,8 @@ GetMoveScore (const char *moveSeq, int column)
   std::string realMoveSeq (moveSeq);
   if (P.play (realMoveSeq) != realMoveSeq.size ())
     return -1;
+  if (P.isWinningMove (column))
+    return -999;
   P.playCol (column);
   return solver.solve (P, false);
 }

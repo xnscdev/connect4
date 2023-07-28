@@ -68,8 +68,8 @@ class Solver {
     transTable.reset();
   }
 
-  void loadBook(std::string book_file) {
-    book.load(book_file);
+  bool loadBook(const unsigned char *data) {
+    return book.load(data);
   }
 
   Solver(); // Constructor
