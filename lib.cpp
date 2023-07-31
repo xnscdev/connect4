@@ -39,7 +39,7 @@ GetMoveScore (const char *moveSeq, int column)
   if (P.play (realMoveSeq) != realMoveSeq.size ())
     return -1;
   if (P.isWinningMove (column))
-    return -999;
+    return -solver.solve (P, false);
   P.playCol (column);
   return solver.solve (P, false);
 }
